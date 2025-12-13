@@ -2,9 +2,40 @@
 
 ![Momentum Banner](https://via.placeholder.com/1200x300?text=MOMENTUM+APP)
 
+> 🎯 **Momentum**, görev tamamlama oranınızı artırmayı hedefleyen, streak mantığı ve
+> oyunlaştırma ile **disiplini alışkanlığa dönüştüren** bir mobil uygulamadır.
+
+- ⏱ Günlük görevleri ertelemeden bitir
+- 🔥 Streak zincirini koruyarak motivasyonu sürdür
+- 🎮 Görsel ödüllerle dopamin döngüsünü doğru kullan
+
 **Momentum**, kullanıcıların günlük görevlerini yönetmelerine, alışkanlık zincirleri (streak) oluşturmalarına ve oyunlaştırılmış (gamified) bir deneyimle motivasyonlarını korumalarına yardımcı olan, **Flutter** ile geliştirilmiş, **Offline-First** (Çevrimdışı Öncelikli) bir mobil uygulamadır.
 
-Sıradan bir yapılacaklar listesi (To-Do List) uygulamasının ötesinde; Momentum, **görsel psikoloji** ve **ödül mekanizmalarını** kullanarak kullanıcıyı "akışta" (flow) tutmayı hedefler.
+Sıradan bir yapılacaklar listesi (To-Do List) uygulamasının ötesinde; Momentum, **görsel psikoloji** ve **ödül mekanizmalarını** kullanarak kullanıcıyı "akışta" (flow) tutmayı hedefler. 
+
+## 👥 Kimler İçin Uygun?
+
+- Günlük görevlerini sürekli erteleyenler
+- Alışkanlık oluşturmakta zorlananlar
+- Minimal ama motive edici uygulamaları sevenler
+- Offline çalışmak isteyen kullanıcılar
+
+## 🔄 Nasıl Çalışır?
+
+1. Kullanıcı uygulamayı ilk kez açar ve ismini girer
+2. Günlük görevlerini öncelik seviyeleriyle ekler
+3. Görevler tamamlandıkça:
+   - İlerleme çubuğu dolar
+   - Streak artar
+4. Gün tamamlanınca görsel ödül tetiklenir
+
+## 🎨 Tasarım ve Psikoloji Yaklaşımı
+
+Momentum, şu prensiplerle tasarlanmıştır:
+
+- **Az ama net UI:** Karar yorgunluğunu azaltmak
+- **Görsel geri bildirim:** Beynin ödül mekanizmasını tetiklemek
+- **Offline-first:** Kullanıcıyı bağımlı değil, özgür kılmak
 
 ## 🌟 Temel Özellikler
 
@@ -53,6 +84,29 @@ Proje, tek dosya yapısı (`main.dart`) üzerinde modüler bir yaklaşımla, **S
 * **Renk Mantığı:** `_oranRenginiVer(double oran)` fonksiyonu, matematiksel başarı oranını UI renk paletine dönüştürür.
 
 ---
+## 🚀 Kurulum ve Çalıştırma
+
+Bu projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izleyin:
+
+**1. Depoyu Klonlayın**
+
+git clone [https://github.com/KULLANICI_ADINIZ/Momentum.git](https://github.com/KULLANICI_ADINIZ/Momentum.git)
+cd Momentum
+
+**2. Bağımlılıkları Yükleyin**
+
+flutter pub get
+
+**3. Uygulamayı Başlatın Cihazınızı veya emülatörü bağladıktan sonra:**
+
+
+flutter run
+
+**4. APK Oluşturma (Release) Arkadaşlarınızla paylaşmak için imzalı APK çıktısı almak isterseniz:**
+
+flutter build apk --release
+Çıktı Yolu: build/app/outputs/flutter-apk/app-release.apk
+
 
 ## 🔮 Gelecek Planları (Roadmap)
 
