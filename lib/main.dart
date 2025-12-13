@@ -191,9 +191,6 @@ class _KarsilamaEkraniState extends State<KarsilamaEkrani> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('kullanici_adi', isim);
 
-      // İsim kaydedildiğinde varsayılan görevleri de yüklemesi için boş liste başlatmıyoruz,
-      // GorevListesiEkrani açılınca null görüp kendi ekleyecek.
-      
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
@@ -292,6 +289,10 @@ class _GorevListesiEkraniState extends State<GorevListesiEkrani> {
   final TextEditingController _textController = TextEditingController();
   int _secilenOncelik = 2; 
 
+  // Takvimi bugün seçili başlatsak da şeridin nerede duracağını belirlemek için
+  // ScrollController kullanabiliriz ama basitlik adına şimdilik listenin başına (ayın 1'ine) dönecek.
+  // Kullanıcı kaydırıp bugünü bulacak.
+  
   @override
   void initState() {
     super.initState();
@@ -441,7 +442,7 @@ class _GorevListesiEkraniState extends State<GorevListesiEkrani> {
         _sonIslemTarihi = kayitliTarih;
       });
     } else {
-      // HİÇ VERİ YOKSA (İLK AÇILIŞ) BU 3 GÖREVİ EKLE
+      // Varsayılan görevler
       setState(() {
         _tumGorevler = [
           {
@@ -614,6 +615,14 @@ class _GorevListesiEkraniState extends State<GorevListesiEkrani> {
   @override
   Widget build(BuildContext context) {
     final liste = _ekrandakiGorevler;
+    
+    // 🔥 YENİ MANTIK: O ANKİ AYIN GÜN SAYISINI HESAPLA
+    // Başlangıç: Ayın 1'i
+    DateTime simdi = DateTime.now();
+    DateTime ayinIlkGunu = DateTime(simdi.year, simdi.month, 1);
+    
+    // Bitiş: Gelecek ayın 0. günü (yani bu ayın son günü)
+    int aydakiGunSayisi = DateTime(simdi.year, simdi.month + 1, 0).day;
 
     return Scaffold(
       appBar: AppBar(
@@ -648,9 +657,12 @@ class _GorevListesiEkraniState extends State<GorevListesiEkrani> {
                 color: const Color(0xFF121212),
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: 30, 
+                  itemCount: aydakiGunSayisi, // 🔥 Sadece o ayın gün sayısı kadar
                   itemBuilder: (context, index) {
-                    DateTime tarih = DateTime.now().add(Duration(days: index)); 
+                    
+                    // 🔥 Ayın 1'inden başlayarak üzerine gün ekliyoruz
+                    DateTime tarih = ayinIlkGunu.add(Duration(days: index)); 
+                    
                     bool seciliMi = _ayniGunMu(tarih, _secilenTarih);
                     Color kutuRengi = _takvimKutusuRengi(tarih, seciliMi);
                     Color yaziRengi = (kutuRengi == const Color(0xFF1E1E1E) && !seciliMi) 
