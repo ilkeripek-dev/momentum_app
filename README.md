@@ -1,7 +1,5 @@
 # 🚀 Momentum: Kişisel Üretkenlik ve Alışkanlık Takip Asistanı
 
-![Momentum Banner](https://via.placeholder.com/1200x300?text=MOMENTUM+APP)
-
 > 🎯 **Momentum**, görev tamamlama oranınızı artırmayı hedefleyen, streak mantığı ve
 > oyunlaştırma ile **disiplini alışkanlığa dönüştüren** bir mobil uygulamadır.
 
