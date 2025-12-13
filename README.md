@@ -54,34 +54,6 @@ Proje, tek dosya yapısı (`main.dart`) üzerinde modüler bir yaklaşımla, **S
 
 ---
 
-## 📸 Ekran Görüntüleri
-
-| Karşılama Ekranı | Ana Görev Listesi | Görev Ekleme | Konfeti Kutlaması |
-| :---: | :---: | :---: | :---: |
-| ![Splash](https://via.placeholder.com/200x400) | ![Home](https://via.placeholder.com/200x400) | ![Add Task](https://via.placeholder.com/200x400) | ![Confetti](https://via.placeholder.com/200x400) |
-
-*(Not: Projenize ait gerçek ekran görüntülerini buraya eklemelisiniz)*
-
----
-
-2. Bağımlılıkları Yükleyin
-
-Bash
-
-flutter pub get
-
-3. Uygulamayı Başlatın Cihazınızı veya emülatörü bağladıktan sonra:
-
-Bash
-
-flutter run
-4. APK Oluşturma (Release) Arkadaşlarınızla paylaşmak için imzalı APK çıktısı almak isterseniz:
-
-Bash
-
-flutter build apk --release
-Çıktı Yolu: build/app/outputs/flutter-apk/app-release.apk
-
 ## 🔮 Gelecek Planları (Roadmap)
 
 * [ ] **Bildirim Sistemi:** Günlük hatırlatıcılar ve motive edici push bildirimleri (Flutter Local Notifications).
