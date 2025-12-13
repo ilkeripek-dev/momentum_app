@@ -139,7 +139,8 @@ Katkılarınızı bekliyoruz! Lütfen bir **Pull Request** açmadan önce bir **
 4. Dalı Push'layın (`git push origin feature/YeniOzellik`).
 5. Bir Pull Request oluşturun.
 
-📄 Lisans
+## 📄 Lisans
+
 Bu proje MIT Lisansı altında lisanslanmıştır. Detaylar için LICENSE dosyasına bakınız.
 
 **Geliştirici:** [İlker İpek]
