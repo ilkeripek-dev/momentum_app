@@ -104,6 +104,7 @@ flutter run
 **4. APK Oluşturma (Release) Arkadaşlarınızla paylaşmak için imzalı APK çıktısı almak isterseniz:**
 
 flutter build apk --release
+
 Çıktı Yolu: build/app/outputs/flutter-apk/app-release.apk
 
 
