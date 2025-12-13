@@ -90,9 +90,11 @@ Bu projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izley
 
 Bu projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izleyin:
 
-```
+
 
 **1. Depoyu Klonlayın**
+
+```
 
 git clone [https://github.com/ilkeripek-dev/momentum_app.git](https://github.com/ilkeripek-dev/momentum_app.git)
 cd momentum_app
@@ -101,17 +103,27 @@ cd momentum_app
 
 **2. Bağımlılıkları Yükleyin**
 
+```
+
 flutter pub get
 
 ```
 
 **3. Uygulamayı Başlatın Cihazınızı veya emülatörü bağladıktan sonra:**
 
+```
+
 flutter run
+
+```
 
 **4. APK Oluşturma (Release) Arkadaşlarınızla paylaşmak için imzalı APK çıktısı almak isterseniz:**
 
+```
+
 flutter build apk --release
+
+```
 
 Çıktı Yolu: build/app/outputs/flutter-apk/app-release.apk
 
