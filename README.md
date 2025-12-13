@@ -97,6 +97,8 @@ Bu projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izley
 git clone [https://github.com/ilkeripek-dev/momentum_app.git](https://github.com/ilkeripek-dev/momentum_app.git)
 cd momentum_app
 
+```bash
+
 **2. Bağımlılıkları Yükleyin**
 
 flutter pub get
