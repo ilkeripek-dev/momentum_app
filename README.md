@@ -81,33 +81,27 @@ Bash
 flutter build apk --release
 Çıktı Yolu: build/app/outputs/flutter-apk/app-release.apk
 
-🔮 Gelecek Planları (Roadmap)
-[ ] Bildirim Sistemi: Günlük hatırlatıcılar ve motive edici push bildirimleri (Flutter Local Notifications).
+## 🔮 Gelecek Planları (Roadmap)
 
-[ ] Karanlık/Aydınlık Mod Geçişi: Kullanıcı tercihine göre tema değişimi.
+* [ ] **Bildirim Sistemi:** Günlük hatırlatıcılar ve motive edici push bildirimleri (Flutter Local Notifications).
+* [ ] **Karanlık/Aydınlık Mod Geçişi:** Kullanıcı tercihine göre tema değişimi.
+* [ ] **İstatistik Sayfası:** Haftalık ve aylık performans grafikleri.
+* [ ] **Google/Apple Girişi:** Verilerin bulutta (Firebase) yedeklenmesi.
 
-[ ] İstatistik Sayfası: Haftalık ve aylık performans grafikleri.
+## 🤝 Katkıda Bulunma
 
-[ ] Google/Apple Girişi: Verilerin bulutta (Firebase) yedeklenmesi.
+Katkılarınızı bekliyoruz! Lütfen bir **Pull Request** açmadan önce bir **Issue** oluşturarak yapacağınız değişikliği tartışın.
 
-🤝 Katkıda Bulunma
-Katkılarınızı bekliyoruz! Lütfen bir Pull Request açmadan önce bir Issue oluşturarak yapacağınız değişikliği tartışın.
-
-Bu depoyu Fork'layın.
-
-Yeni bir özellik dalı oluşturun (git checkout -b feature/YeniOzellik).
-
-Değişikliklerinizi Commit'leyin (git commit -m 'Yeni özellik eklendi').
-
-Dalı Push'layın (git push origin feature/YeniOzellik).
-
-Bir Pull Request oluşturun.
+1. Bu depoyu Fork'layın.
+2. Yeni bir özellik dalı oluşturun (`git checkout -b feature/YeniOzellik`).
+3. Değişikliklerinizi Commit'leyin (`git commit -m 'Yeni özellik eklendi'`).
+4. Dalı Push'layın (`git push origin feature/YeniOzellik`).
+5. Bir Pull Request oluşturun.
 
 📄 Lisans
 Bu proje MIT Lisansı altında lisanslanmıştır. Detaylar için LICENSE dosyasına bakınız.
 
-Geliştirici: [Senin Adın]
+**Geliştirici:** [İlker İpek]
+**İletişim:** [ilkeripek0517@gmail.com]
 
-İletişim: [Senin Mail Adresin]
-
-"Zinciri kırma. Seriyi koru." 🚀
+*"Zinciri kırma. Seriyi koru."* 🚀
