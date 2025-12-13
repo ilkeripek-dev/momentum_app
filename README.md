@@ -82,20 +82,14 @@ Proje, tek dosya yapısı (`main.dart`) üzerinde modüler bir yaklaşımla, **S
 * **Renk Mantığı:** `_oranRenginiVer(double oran)` fonksiyonu, matematiksel başarı oranını UI renk paletine dönüştürür.
 
 ---
-## 🚀 Kurulum ve Çalıştırma
-
-Bu projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izleyin:
 
 ## 🚀 Kurulum ve Çalıştırma
 
 Bu projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izleyin:
-
-
 
 **1. Depoyu Klonlayın**
 
-```
-
+```bash
 git clone [https://github.com/ilkeripek-dev/momentum_app.git](https://github.com/ilkeripek-dev/momentum_app.git)
 cd momentum_app
 
