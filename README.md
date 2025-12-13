@@ -141,7 +141,7 @@ Katkılarınızı bekliyoruz! Lütfen bir **Pull Request** açmadan önce bir **
 
 ## 📄 Lisans
 
-Bu proje MIT Lisansı altında lisanslanmıştır. Detaylar için LICENSE dosyasına bakınız.
+Bu proje MIT Lisansı altında lisanslanmıştır. Detaylar için ``` LICENSE ``` dosyasına bakınız.
 
 **Geliştirici:** [İlker İpek]
 
