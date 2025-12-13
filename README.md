@@ -88,8 +88,8 @@ Bu projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izley
 
 **1. Depoyu Klonlayın**
 
-git clone [https://github.com/KULLANICI_ADINIZ/Momentum.git](https://github.com/KULLANICI_ADINIZ/Momentum.git)
-cd Momentum
+git clone [https://github.com/ilkeripek-dev/momentum_app.git](https://github.com/ilkeripek-dev/momentum_app.git)
+cd momentum_app
 
 **2. Bağımlılıkları Yükleyin**
 
