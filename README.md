@@ -64,11 +64,50 @@ Proje, tek dosya yapısı (`main.dart`) üzerinde modüler bir yaklaşımla, **S
 
 ---
 
-## 🚀 Kurulum ve Çalıştırma
+2. Bağımlılıkları Yükleyin
 
-Bu projeyi yerel makinenizde çalıştırmak için aşağıdaki adımları izleyin:
+Bash
 
-**1. Depoyu Klonlayın**
-```bash
-git clone [https://github.com/KULLANICI_ADINIZ/Momentum.git](https://github.com/KULLANICI_ADINIZ/Momentum.git)
-cd Momentum
+flutter pub get
+3. Uygulamayı Başlatın Cihazınızı veya emülatörü bağladıktan sonra:
+
+Bash
+
+flutter run
+4. APK Oluşturma (Release) Arkadaşlarınızla paylaşmak için imzalı APK çıktısı almak isterseniz:
+
+Bash
+
+flutter build apk --release
+Çıktı Yolu: build/app/outputs/flutter-apk/app-release.apk
+
+🔮 Gelecek Planları (Roadmap)
+[ ] Bildirim Sistemi: Günlük hatırlatıcılar ve motive edici push bildirimleri (Flutter Local Notifications).
+
+[ ] Karanlık/Aydınlık Mod Geçişi: Kullanıcı tercihine göre tema değişimi.
+
+[ ] İstatistik Sayfası: Haftalık ve aylık performans grafikleri.
+
+[ ] Google/Apple Girişi: Verilerin bulutta (Firebase) yedeklenmesi.
+
+🤝 Katkıda Bulunma
+Katkılarınızı bekliyoruz! Lütfen bir Pull Request açmadan önce bir Issue oluşturarak yapacağınız değişikliği tartışın.
+
+Bu depoyu Fork'layın.
+
+Yeni bir özellik dalı oluşturun (git checkout -b feature/YeniOzellik).
+
+Değişikliklerinizi Commit'leyin (git commit -m 'Yeni özellik eklendi').
+
+Dalı Push'layın (git push origin feature/YeniOzellik).
+
+Bir Pull Request oluşturun.
+
+📄 Lisans
+Bu proje MIT Lisansı altında lisanslanmıştır. Detaylar için LICENSE dosyasına bakınız.
+
+Geliştirici: [Senin Adın]
+
+İletişim: [Senin Mail Adresin]
+
+"Zinciri kırma. Seriyi koru." 🚀
