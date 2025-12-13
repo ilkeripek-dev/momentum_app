@@ -69,6 +69,7 @@ Proje, tek dosya yapısı (`main.dart`) üzerinde modüler bir yaklaşımla, **S
 Bash
 
 flutter pub get
+
 3. Uygulamayı Başlatın Cihazınızı veya emülatörü bağladıktan sonra:
 
 Bash
