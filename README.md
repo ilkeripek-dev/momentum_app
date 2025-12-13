@@ -143,6 +143,7 @@ Katkılarınızı bekliyoruz! Lütfen bir **Pull Request** açmadan önce bir **
 Bu proje MIT Lisansı altında lisanslanmıştır. Detaylar için LICENSE dosyasına bakınız.
 
 **Geliştirici:** [İlker İpek]
+
 **İletişim:** [ilkeripek0517@gmail.com]
 
 *"Zinciri kırma. Seriyi koru."* 🚀
