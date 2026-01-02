@@ -1,10 +1,19 @@
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:confetti/confetti.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'models/task_model.dart'; // Model dosyasını içeri aldık
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // --- HIVE KURULUMU BAŞLANGIÇ ---
+  await Hive.initFlutter();
+  Hive.registerAdapter(TaskAdapter()); // Robotun ürettiği adaptör
+  await Hive.openBox<Task>('tasks'); // Görev kutusunu açtık
+  // --- HIVE KURULUMU BİTİŞ ---
+
   runApp(const MomentumApp());
 }
 
@@ -58,7 +67,7 @@ class BaslangicKontrol extends StatefulWidget {
 
 class _BaslangicKontrolState extends State<BaslangicKontrol> {
   String? _kayitliIsim;
-  String _gununSozu = ""; 
+  String _gununSozu = "";
 
   final List<String> _sozler = [
     "Mazeret yok. Sadece sonuçlar var.",
@@ -191,6 +200,14 @@ class _KarsilamaEkraniState extends State<KarsilamaEkrani> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('kullanici_adi', isim);
 
+      // İlk defa girenler için varsayılan görevler ekleyelim
+      final taskBox = Hive.box<Task>('tasks');
+      if (taskBox.isEmpty) {
+        taskBox.add(Task(isim: 'Güne 1 bardak su ile başla 💧', yapildi: false, oncelik: 3, tarih: DateTime.now()));
+        taskBox.add(Task(isim: 'Yatağını topla (İlk zafer) 🛏️', yapildi: false, oncelik: 2, tarih: DateTime.now()));
+        taskBox.add(Task(isim: '10 sayfa kitap oku 📚', yapildi: false, oncelik: 1, tarih: DateTime.now()));
+      }
+
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
@@ -268,7 +285,7 @@ class _KarsilamaEkraniState extends State<KarsilamaEkrani> {
 }
 
 // ---------------------------------------------------------
-// 3. MOMENTUM ANA EKRAN
+// 3. MOMENTUM ANA EKRAN (HIVE ENTEGRELİ)
 // ---------------------------------------------------------
 class GorevListesiEkrani extends StatefulWidget {
   const GorevListesiEkrani({super.key});
@@ -278,7 +295,9 @@ class GorevListesiEkrani extends StatefulWidget {
 }
 
 class _GorevListesiEkraniState extends State<GorevListesiEkrani> {
-  List<Map<String, dynamic>> _tumGorevler = [];
+  // HIVE KUTUSU BURADA:
+  final Box<Task> taskBox = Hive.box<Task>('tasks');
+  
   DateTime _secilenTarih = DateTime.now();
   String _kullaniciAdi = "";
   
@@ -289,14 +308,10 @@ class _GorevListesiEkraniState extends State<GorevListesiEkrani> {
   final TextEditingController _textController = TextEditingController();
   int _secilenOncelik = 2; 
 
-  // Takvimi bugün seçili başlatsak da şeridin nerede duracağını belirlemek için
-  // ScrollController kullanabiliriz ama basitlik adına şimdilik listenin başına (ayın 1'ine) dönecek.
-  // Kullanıcı kaydırıp bugünü bulacak.
-  
   @override
   void initState() {
     super.initState();
-    _verileriYukle(); 
+    _kullaniciBilgileriniYukle();
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
   }
 
@@ -304,6 +319,28 @@ class _GorevListesiEkraniState extends State<GorevListesiEkrani> {
   void dispose() {
     _confettiController.dispose();
     super.dispose();
+  }
+
+  // Kullanıcı adı ve seri sayacı hala SharedPrefs'te (Basit veri olduğu için)
+  void _kullaniciBilgileriniYukle() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _kullaniciAdi = prefs.getString('kullanici_adi') ?? "";
+      _seriSayaci = prefs.getInt('seri_sayaci') ?? 0;
+      _sonIslemTarihi = prefs.getString('son_islem_tarihi');
+    });
+
+    // Seri bozulmuş mu kontrol et
+    if (_sonIslemTarihi != null) {
+        DateTime son = DateTime.parse(_sonIslemTarihi!); 
+        DateTime sonGun = DateTime(son.year, son.month, son.day);
+        DateTime bugun = DateTime.now();
+        DateTime bugunGun = DateTime(bugun.year, bugun.month, bugun.day);
+        if (bugunGun.difference(sonGun).inDays > 1) {
+             setState(() { _seriSayaci = 0; });
+             prefs.setInt('seri_sayaci', 0);
+        }
+    }
   }
 
   bool _ayniGunMu(DateTime tarih1, DateTime tarih2) {
@@ -320,26 +357,28 @@ class _GorevListesiEkraniState extends State<GorevListesiEkrani> {
     return Colors.redAccent;
   }
 
-  List<Map<String, dynamic>> get _ekrandakiGorevler {
-    return _tumGorevler.where((gorev) {
-      if (gorev['tarih'] == null) return _ayniGunMu(DateTime.now(), _secilenTarih);
-      DateTime gorevTarihi = DateTime.parse(gorev['tarih']);
-      return _ayniGunMu(gorevTarihi, _secilenTarih);
+  // --- HIVE'DAN VERİ ÇEKME FONKSİYONLARI ---
+  
+  List<Task> get _ekrandakiGorevler {
+    final tumGorevler = taskBox.values.toList();
+    // Önceliğe göre sırala (Büyükten küçüğe)
+    tumGorevler.sort((a, b) => b.oncelik.compareTo(a.oncelik));
+    
+    return tumGorevler.where((gorev) {
+      return _ayniGunMu(gorev.tarih, _secilenTarih);
     }).toList();
   }
 
-  List<Map<String, dynamic>> _tarihinGorevleri(DateTime tarih) {
-    return _tumGorevler.where((gorev) {
-      if (gorev['tarih'] == null) return false;
-      DateTime gorevTarihi = DateTime.parse(gorev['tarih']);
-      return _ayniGunMu(gorevTarihi, tarih);
+  List<Task> _tarihinGorevleri(DateTime tarih) {
+    return taskBox.values.where((gorev) {
+      return _ayniGunMu(gorev.tarih, tarih);
     }).toList();
   }
 
   double _tarihinBasarisi(DateTime tarih) {
     var gorevler = _tarihinGorevleri(tarih);
     if (gorevler.isEmpty) return 0.0;
-    int yapilanlar = gorevler.where((g) => g['yapildi'] == true).length;
+    int yapilanlar = gorevler.where((g) => g.yapildi).length;
     return yapilanlar / gorevler.length;
   }
 
@@ -354,7 +393,7 @@ class _GorevListesiEkraniState extends State<GorevListesiEkrani> {
 
   double get _ilerlemeOrani {
     if (_ekrandakiGorevler.isEmpty) return 0.0;
-    int yapilanlar = _ekrandakiGorevler.where((g) => g['yapildi'] == true).length;
+    int yapilanlar = _ekrandakiGorevler.where((g) => g.yapildi).length;
     return yapilanlar / _ekrandakiGorevler.length;
   }
 
@@ -374,132 +413,67 @@ class _GorevListesiEkraniState extends State<GorevListesiEkrani> {
     return "Hadi, başlama vakti$hitap! ⏰";
   }
 
-  void _seriyiGuncelle() {
+  void _seriyiGuncelle() async {
     DateTime bugun = DateTime.now();
     String bugunStr = "${bugun.year}-${bugun.month}-${bugun.day}";
 
     if (_sonIslemTarihi == bugunStr) return;
 
     DateTime? sonTarih = _sonIslemTarihi != null ? DateTime.parse(_sonIslemTarihi!) : null;
+    int yeniSeri = _seriSayaci;
 
-    setState(() {
-      if (sonTarih != null) {
-        final dun = bugun.subtract(const Duration(days: 1));
-        bool dunYapildi = _ayniGunMu(sonTarih, dun);
-        if (dunYapildi) {
-          _seriSayaci++; 
-        } else {
-          _seriSayaci = 1; 
-        }
+    if (sonTarih != null) {
+      final dun = bugun.subtract(const Duration(days: 1));
+      bool dunYapildi = _ayniGunMu(sonTarih, dun);
+      if (dunYapildi) {
+        yeniSeri++; 
       } else {
-        _seriSayaci = 1; 
+        yeniSeri = 1; 
       }
-      _sonIslemTarihi = bugunStr; 
-    });
-    _verileriKaydet();
-  }
-
-  void _verileriKaydet() async {
-    final prefs = await SharedPreferences.getInstance();
-    String veri = jsonEncode(_tumGorevler);
-    await prefs.setString('gorev_listesi', veri);
-    await prefs.setInt('seri_sayaci', _seriSayaci);
-    if (_sonIslemTarihi != null) {
-      await prefs.setString('son_islem_tarihi', _sonIslemTarihi!);
-    }
-  }
-
-  void _verileriYukle() async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    setState(() {
-      _kullaniciAdi = prefs.getString('kullanici_adi') ?? "";
-    });
-
-    String? veri = prefs.getString('gorev_listesi');
-    int? kayitliSeri = prefs.getInt('seri_sayaci');
-    String? kayitliTarih = prefs.getString('son_islem_tarihi');
-
-    if (kayitliTarih != null) {
-        DateTime son = DateTime.parse(kayitliTarih); 
-        DateTime sonGun = DateTime(son.year, son.month, son.day);
-        DateTime bugun = DateTime.now();
-        DateTime bugunGun = DateTime(bugun.year, bugun.month, bugun.day);
-        if (bugunGun.difference(sonGun).inDays > 1) {
-            kayitliSeri = 0; 
-        }
-    }
-
-    if (veri != null) {
-      setState(() {
-        _tumGorevler = List<Map<String, dynamic>>.from(jsonDecode(veri));
-        for (var gorev in _tumGorevler) {
-          if (gorev['tarih'] == null) {
-            gorev['tarih'] = DateTime.now().toIso8601String();
-          }
-        }
-        _seriSayaci = kayitliSeri ?? 0;
-        _sonIslemTarihi = kayitliTarih;
-      });
     } else {
-      // Varsayılan görevler
-      setState(() {
-        _tumGorevler = [
-          {
-            'isim': 'Güne 1 bardak su ile başla 💧', 
-            'yapildi': false,
-            'oncelik': 3, 
-            'tarih': DateTime.now().toIso8601String(),
-          },
-          {
-            'isim': 'Yatağını topla (İlk zafer) 🛏️', 
-            'yapildi': false,
-            'oncelik': 2, 
-            'tarih': DateTime.now().toIso8601String(),
-          },
-          {
-            'isim': '10 sayfa kitap oku 📚', 
-            'yapildi': false,
-            'oncelik': 1, 
-            'tarih': DateTime.now().toIso8601String(),
-          },
-        ];
-        _verileriKaydet();
-      });
+      yeniSeri = 1; 
     }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('seri_sayaci', yeniSeri);
+    await prefs.setString('son_islem_tarihi', bugunStr);
+
+    setState(() {
+      _seriSayaci = yeniSeri;
+      _sonIslemTarihi = bugunStr;
+    });
   }
+
+  // --- HIVE EKLEME / SİLME ---
 
   void _gorevEkle(String gorevAdi) {
     if (gorevAdi.isNotEmpty) {
-      setState(() {
-        _tumGorevler.add({
-          'isim': gorevAdi, 
-          'yapildi': false,
-          'oncelik': _secilenOncelik,
-          'tarih': _secilenTarih.toIso8601String(),
-        });
-        _tumGorevler.sort((a, b) => b['oncelik'].compareTo(a['oncelik']));
-      });
-      _verileriKaydet();
+      final yeniGorev = Task(
+        isim: gorevAdi,
+        yapildi: false,
+        oncelik: _secilenOncelik,
+        tarih: _secilenTarih,
+      );
+      taskBox.add(yeniGorev); // Veritabanına kaydet
+      
       _textController.clear();
       Navigator.of(context).pop();
+      setState(() {}); // Ekranı yenile
     }
   }
 
-  void _gorevSil(Map<String, dynamic> gorev) {
-    setState(() {
-      _tumGorevler.remove(gorev);
-    });
-    _verileriKaydet();
+  void _gorevSil(Task gorev) {
+    gorev.delete(); // Veritabanından sil (HiveObject sayesinde çok kolay)
+    setState(() {});
   }
 
-  void _durumDegistir(Map<String, dynamic> gorev) {
+  void _durumDegistir(Task gorev) {
     setState(() {
-      gorev['yapildi'] = !gorev['yapildi'];
+      gorev.yapildi = !gorev.yapildi;
     });
-    _verileriKaydet();
+    gorev.save(); // Güncellemeyi kaydet
 
-    if (gorev['yapildi'] && _ayniGunMu(DateTime.now(), DateTime.parse(gorev['tarih']))) {
+    if (gorev.yapildi && _ayniGunMu(DateTime.now(), gorev.tarih)) {
       _seriyiGuncelle();
     }
 
@@ -614,217 +588,216 @@ class _GorevListesiEkraniState extends State<GorevListesiEkrani> {
 
   @override
   Widget build(BuildContext context) {
-    final liste = _ekrandakiGorevler;
-    
-    // 🔥 YENİ MANTIK: O ANKİ AYIN GÜN SAYISINI HESAPLA
-    // Başlangıç: Ayın 1'i
-    DateTime simdi = DateTime.now();
-    DateTime ayinIlkGunu = DateTime(simdi.year, simdi.month, 1);
-    
-    // Bitiş: Gelecek ayın 0. günü (yani bu ayın son günü)
-    int aydakiGunSayisi = DateTime(simdi.year, simdi.month + 1, 0).day;
+    // ValueListenableBuilder ile sarmalıyoruz ki DB değişince ekran otomatik güncellensin
+    return ValueListenableBuilder(
+      valueListenable: taskBox.listenable(),
+      builder: (context, Box<Task> box, _) {
+        final liste = _ekrandakiGorevler; // Getter otomatik olarak box'tan okuyacak
+        
+        DateTime simdi = DateTime.now();
+        DateTime ayinIlkGunu = DateTime(simdi.year, simdi.month, 1);
+        int aydakiGunSayisi = DateTime(simdi.year, simdi.month + 1, 0).day;
 
-    return Scaffold(
-      appBar: AppBar(
-        leadingWidth: 80, 
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 10),
-          child: Row(
-            children: [
-              const Icon(Icons.local_fire_department, color: Colors.orangeAccent, size: 28),
-              const SizedBox(width: 4),
-              Text(
-                "$_seriSayaci", 
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)
+        return Scaffold(
+          appBar: AppBar(
+            leadingWidth: 80, 
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: Row(
+                children: [
+                  const Icon(Icons.local_fire_department, color: Colors.orangeAccent, size: 28),
+                  const SizedBox(width: 4),
+                  Text(
+                    "$_seriSayaci", 
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)
+                  ),
+                ],
               ),
+            ),
+            title: const Text('MOMENTUM'),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.calendar_month, color: Colors.cyanAccent),
+                onPressed: _takvimdenSec,
+              )
             ],
           ),
-        ),
-        title: const Text('MOMENTUM'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.calendar_month, color: Colors.cyanAccent),
-            onPressed: _takvimdenSec,
-          )
-        ],
-      ),
-      body: Stack(
-        children: [
-          Column(
+          body: Stack(
             children: [
-              Container(
-                height: 85,
-                color: const Color(0xFF121212),
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: aydakiGunSayisi, // 🔥 Sadece o ayın gün sayısı kadar
-                  itemBuilder: (context, index) {
-                    
-                    // 🔥 Ayın 1'inden başlayarak üzerine gün ekliyoruz
-                    DateTime tarih = ayinIlkGunu.add(Duration(days: index)); 
-                    
-                    bool seciliMi = _ayniGunMu(tarih, _secilenTarih);
-                    Color kutuRengi = _takvimKutusuRengi(tarih, seciliMi);
-                    Color yaziRengi = (kutuRengi == const Color(0xFF1E1E1E) && !seciliMi) 
-                        ? Colors.grey 
-                        : Colors.black;
-                    if (seciliMi && kutuRengi.opacity < 0.5) {
-                        yaziRengi = Colors.white; 
-                    }
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() { _secilenTarih = tarih; });
-                      },
-                      child: Container(
-                        width: 60,
-                        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: kutuRengi,
-                          borderRadius: BorderRadius.circular(12),
-                          border: seciliMi ? Border.all(color: Colors.white, width: 2) : null,
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "${tarih.day}",
-                              style: TextStyle(
-                                fontSize: 20, 
-                                fontWeight: FontWeight.bold,
-                                color: yaziRengi
-                              ),
-                            ),
-                            Text(
-                              ["Ocak","Şub","Mart","Nis","May","Haz","Tem","Ağus","Eylül","Ekim","Kas","Ara"][tarih.month-1],
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: yaziRengi
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              if (liste.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _durumMesaji,
-                              style: TextStyle(color: _durumRengi, fontSize: 16, fontWeight: FontWeight.bold),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          Text(
-                            "%${(_ilerlemeOrani * 100).toInt()}",
-                            style: TextStyle(
-                              color: _durumRengi, 
-                              fontWeight: FontWeight.bold, 
-                              fontSize: 22 
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: LinearProgressIndicator(
-                          value: _ilerlemeOrani,
-                          minHeight: 20,
-                          backgroundColor: Colors.grey[800],
-                          valueColor: AlwaysStoppedAnimation<Color>(_durumRengi),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-              Expanded(
-                child: liste.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.event_note, size: 70, color: Colors.grey[800]),
-                          const SizedBox(height: 15),
-                          Text(
-                            'Görev yok, dert yok.\nYa da bir şeyler mi eklesek?',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                          ),
-                        ],
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.only(bottom: 80),
-                      itemCount: liste.length,
+              Column(
+                children: [
+                  Container(
+                    height: 85,
+                    color: const Color(0xFF121212),
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: aydakiGunSayisi, 
                       itemBuilder: (context, index) {
-                        final gorev = liste[index];
-                        final oncelikRengi = _oncelikRengiVer(gorev['oncelik']);
-
-                        return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        DateTime tarih = ayinIlkGunu.add(Duration(days: index)); 
+                        bool seciliMi = _ayniGunMu(tarih, _secilenTarih);
+                        Color kutuRengi = _takvimKutusuRengi(tarih, seciliMi);
+                        Color yaziRengi = (kutuRengi == const Color(0xFF1E1E1E) && !seciliMi) 
+                            ? Colors.grey 
+                            : Colors.black;
+                        if (seciliMi && kutuRengi.opacity < 0.5) {
+                            yaziRengi = Colors.white; 
+                        }
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() { _secilenTarih = tarih; });
+                          },
                           child: Container(
+                            width: 60,
+                            margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
                             decoration: BoxDecoration(
-                              border: Border(left: BorderSide(color: oncelikRengi, width: 6)),
-                              color: const Color(0xFF252525),
+                              color: kutuRengi,
+                              borderRadius: BorderRadius.circular(12),
+                              border: seciliMi ? Border.all(color: Colors.white, width: 2) : null,
                             ),
-                            child: ListTile(
-                              leading: Checkbox(
-                                value: gorev['yapildi'],
-                                onChanged: (value) => _durumDegistir(gorev),
-                                activeColor: oncelikRengi,
-                                checkColor: Colors.black,
-                                side: const BorderSide(color: Colors.grey),
-                              ),
-                              title: Text(
-                                gorev['isim'],
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: gorev['yapildi'] ? Colors.grey : Colors.white,
-                                  decoration: gorev['yapildi']
-                                    ? TextDecoration.lineThrough
-                                    : TextDecoration.none,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  "${tarih.day}",
+                                  style: TextStyle(
+                                    fontSize: 20, 
+                                    fontWeight: FontWeight.bold,
+                                    color: yaziRengi
+                                  ),
                                 ),
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
-                                onPressed: () => _gorevSil(gorev),
-                              ),
+                                Text(
+                                  ["Ocak","Şub","Mart","Nis","May","Haz","Tem","Ağus","Eylül","Ekim","Kas","Ara"][tarih.month-1],
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: yaziRengi
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         );
                       },
                     ),
+                  ),
+
+                  if (liste.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _durumMesaji,
+                                  style: TextStyle(color: _durumRengi, fontSize: 16, fontWeight: FontWeight.bold),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Text(
+                                "%${(_ilerlemeOrani * 100).toInt()}",
+                                style: TextStyle(
+                                  color: _durumRengi, 
+                                  fontWeight: FontWeight.bold, 
+                                  fontSize: 22 
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: LinearProgressIndicator(
+                              value: _ilerlemeOrani,
+                              minHeight: 20,
+                              backgroundColor: Colors.grey[800],
+                              valueColor: AlwaysStoppedAnimation<Color>(_durumRengi),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  Expanded(
+                    child: liste.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.event_note, size: 70, color: Colors.grey[800]),
+                              const SizedBox(height: 15),
+                              Text(
+                                'Görev yok, dert yok.\nYa da bir şeyler mi eklesek?',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 80),
+                          itemCount: liste.length,
+                          itemBuilder: (context, index) {
+                            final gorev = liste[index];
+                            final oncelikRengi = _oncelikRengiVer(gorev.oncelik);
+
+                            return Card(
+                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  border: Border(left: BorderSide(color: oncelikRengi, width: 6)),
+                                  color: const Color(0xFF252525),
+                                ),
+                                child: ListTile(
+                                  leading: Checkbox(
+                                    value: gorev.yapildi,
+                                    onChanged: (value) => _durumDegistir(gorev),
+                                    activeColor: oncelikRengi,
+                                    checkColor: Colors.black,
+                                    side: const BorderSide(color: Colors.grey),
+                                  ),
+                                  title: Text(
+                                    gorev.isim,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      color: gorev.yapildi ? Colors.grey : Colors.white,
+                                      decoration: gorev.yapildi
+                                        ? TextDecoration.lineThrough
+                                        : TextDecoration.none,
+                                    ),
+                                  ),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
+                                    onPressed: () => _gorevSil(gorev),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                  ),
+                ],
+              ),
+              
+              Align(
+                alignment: Alignment.topCenter,
+                child: ConfettiWidget(
+                  confettiController: _confettiController,
+                  blastDirectionality: BlastDirectionality.explosive,
+                  shouldLoop: false, 
+                  colors: const [Colors.cyanAccent, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
+                ),
               ),
             ],
           ),
-          
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.explosive,
-              shouldLoop: false, 
-              colors: const [Colors.cyanAccent, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
-            ),
+          floatingActionButton: FloatingActionButton(
+            onPressed: _eklemePenceresiniAc,
+            child: const Icon(Icons.add),
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _eklemePenceresiniAc,
-        child: const Icon(Icons.add),
-      ),
+        );
+      }
     );
   }
 }
